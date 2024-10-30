@@ -9,10 +9,14 @@ redis_client = redis.Redis.from_url(redis_url, decode_responses=True)
 def lpush_to_queue(queue_name: str, message: dict):
     """Push a message to a Redis list (queue)."""
     try:
-        # Convert the message to a JSON string and push to Redis list
-        redis_client.lpush(queue_name, json.dumps(message))
-        print(f"Message pushed to queue: {queue_name}")
+        json_message = json.dumps(message)
+        print(f"Pushing message to queue {queue_name}: {json_message}")
+        redis_client.lpush(queue_name, json_message)
+        queue_length = redis_client.llen(queue_name)
+        print(f"Queue {queue_name} length after push: {queue_length}")
+        return True
     except Exception as e:
+        print(f"Failed to push message to queue: {str(e)}")
         raise RuntimeError(f"Failed to push message to queue: {str(e)}")
 
 # Example function to check Redis connection (optional)

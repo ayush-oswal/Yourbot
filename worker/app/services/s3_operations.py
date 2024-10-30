@@ -1,7 +1,9 @@
 import requests
 
 class S3Operations:
-    def download_object(download_url: str) -> bytes:
+    def __init__(self):
+        pass
+    def download_object(self, download_url: str) -> bytes:
         """
         Download an object from S3 and return its content as bytes.
 

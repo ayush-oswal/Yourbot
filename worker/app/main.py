@@ -1,53 +1,62 @@
 import json
+import time
 from redis import Redis
-from rq import Worker, Queue, Connection
-from services.s3_operations import S3Operations
-from processors.pdf_processor import process_pdf
-from processors.text_processor import process_text
 import os
 import dotenv
+from app.services.s3_operations import S3Operations
+from app.processors.pdf_processor import process_pdf
+from app.processors.text_processor import process_text
 
 dotenv.load_dotenv()
 
 # Constants
-S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 
 # Initialize Redis connection
-redis_conn = Redis.from_url("redis://localhost:6379")
+redis_conn = Redis.from_url(redis_url)
 
-def worker_task(data):
-    """
-    This function will be executed by the worker.
-    
-    Args:
-        data (str): JSON string containing file information from the queue.
-    
-    Returns:
-        None
-    """
-    message = json.loads(data)  # Decode the JSON message from the Redis queue
+def process_file(data):
+    """Process the data received from the queue."""
+    try:
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
 
-    download_url = message["download_url"]
-    chatbot_id = message["chatbot_id"]
-    filename = message["filename"]
+        message = json.loads(data) if isinstance(data, str) else data
+        
+        download_url = message["download_url"]
+        chatbot_id = message["chatbot_id"]
+        key = message["key"]
+        user_id = message["user_id"]
 
+        # Download the file from S3
+        s3_operations = S3Operations()
+        file_bytes = s3_operations.download_object(download_url)
 
-    # Download the file from S3 using the download_object method
-    s3_operations = S3Operations()
-    file_bytes = s3_operations.download_object(download_url)
+        # Determine file type and process accordingly
+        if key.endswith('.pdf'):
+            process_pdf(file_bytes, key, chatbot_id, user_id)
+        elif key.endswith('.txt'):
+            process_text(file_bytes, key, chatbot_id, user_id)
+        else:
+            print(f"Unsupported file type for '{key}'")
+            
+    except Exception as e:
+        print(f"Error processing task: {str(e)}")
 
-    # Determine file type and process accordingly
-    if filename.endswith('.pdf'):
-        process_pdf(file_bytes, filename, chatbot_id)
-    elif filename.endswith('.txt'):
-        process_text(file_bytes, filename, chatbot_id)
-    else:
-        print(f"Unsupported file type for '{filename}'")
+def start_worker():
+    """Continuously listen for new jobs in the Redis queue."""
+    while True:
+        try:
+            # Use BRPOP to wait for messages on the queue
+            data = redis_conn.brpop("process_file", timeout=0)  # Timeout 0 means wait indefinitely
+            if data:
+                # The data returned by brpop is a tuple (queue_name, message)
+                message = data[1]  # Extract the message from the tuple
+                process_file(message)  # Process the message
+        except Exception as err:
+            print(f"Error {err}")
+            time.sleep(1)  # Optional: Sleep before retrying
 
-# Setup the worker
 if __name__ == "__main__":
-    with Connection(redis_conn):
-        worker = Worker(Queue("process_file"))
-        print("Worker is starting...")
-        while True:
-            worker.work()
+    print("Worker is starting...")
+    start_worker()

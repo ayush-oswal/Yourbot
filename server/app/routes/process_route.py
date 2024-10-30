@@ -10,15 +10,15 @@ router = APIRouter(
 )
 
 class ProcessFileData(BaseModel):
-    filename: str
+    key: str
     chatbot_id: str
 
 @router.post("/")
 async def process_file(data: ProcessFileData, user_data: dict = Depends(get_current_user)):
     """Process a file."""
     try:
-        download_url = generate_presigned_download_url(data.filename)
-        lpush_to_queue("process_file", {**data.model_dump(), "download_url": download_url})
+        download_url = generate_presigned_download_url(data.key)
+        lpush_to_queue("process_file", {**data.model_dump(), "download_url": download_url, "user_id": user_data["user_id"]})
         return {"message": "File processing started"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

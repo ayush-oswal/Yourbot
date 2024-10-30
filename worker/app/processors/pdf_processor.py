@@ -1,13 +1,13 @@
 import io
 from PyPDF2 import PdfReader  # Ensure you have PyPDF2 installed for PDF processing
 
-def process_pdf(pdf_bytes: bytes, filename: str, chatbot_id: str):
+def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
     Process the downloaded PDF bytes and extract content.
 
     Args:
         pdf_bytes (bytes): The content of the PDF in bytes.
-        filename (str): The name of the file for processing reference.
+        key (str): The name of the file for processing reference.
 
     Returns:
         None
@@ -21,7 +21,7 @@ def process_pdf(pdf_bytes: bytes, filename: str, chatbot_id: str):
             text = page.extract_text()  # Extract text from the page
             print(f"Page {page_num + 1} content:\n{text}\n")
         
-        print(f"Processed PDF file: {filename}")
+        print(f"Processed PDF file: {key}")
     
     except Exception as e:
-        raise RuntimeError(f"Error processing the PDF file '{filename}': {str(e)}")
+        raise RuntimeError(f"Error processing the PDF file '{key}': {str(e)}")

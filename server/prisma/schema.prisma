@@ -21,6 +21,7 @@ model User {
 model Chatbot {
   id     String   @id @default(uuid())  // UUID for the chatbot
   name   String
+  description String
   user   User     @relation(fields: [userId], references: [id])
   userId String   // Foreign key relation to the User model
 }
