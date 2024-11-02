@@ -8,8 +8,7 @@ class S3Operations:
         Download an object from S3 and return its content as bytes.
 
         Args:
-            object_key (str): The key of the object in S3.
-            bucket_name (str): The name of the S3 bucket.
+            download_url (str): The URL to download the object from S3.
 
         Returns:
             bytes: The content of the object in bytes.
