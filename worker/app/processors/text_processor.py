@@ -1,14 +1,4 @@
-import google.generativeai as genai
-import dotenv
-import os
-
-dotenv.load_dotenv()
-
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-genai.configure(api_key=GEMINI_API_KEY)
-
-model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction="Provide a very brief, high-level summary in one sentence. Focus only on the document's main purpose. Summarize what the document is about, not the content of the document itself.")
+from app.core.text_chunker import TextChunker
 
 def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
@@ -27,9 +17,11 @@ def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: str):
         
 
 
-        summary = model.generate_content(text_content)
 
-        print(summary.text)
+        # Chunking the text into smaller chunks
+        chunks = TextChunker().chunk_text(text_content)
+
+        # For every chunk store in postgres, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
     
     except Exception as e:
         raise RuntimeError(f"Error processing the text file '{key}': {str(e)}")
