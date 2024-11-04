@@ -1,6 +1,7 @@
 import io
 from PyPDF2 import PdfReader  # Ensure you have PyPDF2 installed for PDF processing
 from app.core.text_chunker import TextChunker
+from app.core.jina_ai import JinaAI
 
 def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
@@ -28,7 +29,10 @@ def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
         # Chunking the text into smaller chunks
         chunks = TextChunker().chunk_text(all_text) 
 
-        # For every chunk, store in postgres, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
+        embeddings, total_tokens = JinaAI().fetch_embeddings(chunks)
+        print(f"Embeddings: {len(embeddings)}")
+        print(f"Total tokens used: {total_tokens}")
+        # For every chunk, store in postgres, obtain embeddings from Jina AI, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
 
     except Exception as e:
         raise RuntimeError(f"Error processing the PDF file '{key}': {str(e)}")
