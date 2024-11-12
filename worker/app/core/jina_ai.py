@@ -19,7 +19,7 @@ class JinaAI:
         jina_api_key = os.getenv(f"JINA_API_KEY_{random_index}")
         return jina_api_key
     
-    def fetch_embeddings(self, chunks, batch_size=4):
+    def fetch_embeddings(self, chunks, batch_size=4, user_tokens=0):
         print(f"Fetching embeddings for {len(chunks)} chunks")
         # jina_api_key = self.get_random_jina_api_key()
         jina_api_key = "jina_fcc1305fd47641bc85f626fdcc049bdfi3gxrnbzsiSm34xdOKXCh7qdIWA1"
@@ -43,6 +43,11 @@ class JinaAI:
             response = requests.post(url, headers=headers, json=data)
             response_data = response.json()
             results.extend(response_data.get('data', []))
-            total_tokens += response_data.get('usage', {}).get('total_tokens', 0)  # Accumulate total tokens
+            tokens = response_data.get('usage', {}).get('total_tokens', 0)
+            total_tokens += tokens  # Accumulate total tokens
+            user_tokens -= tokens
+            if user_tokens <= 0:
+                break
+
         return results, total_tokens
         

@@ -2,8 +2,10 @@ import io
 from PyPDF2 import PdfReader  # Ensure you have PyPDF2 installed for PDF processing
 from app.core.text_chunker import TextChunker
 from app.core.jina_ai import JinaAI
+from app.core.user import get_user_tokens, update_user_tokens
+from app.core.store_chunks import store_chunks
 
-def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
+async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
     Process the downloaded PDF bytes and extract content.
 
@@ -29,10 +31,27 @@ def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
         # Chunking the text into smaller chunks
         chunks = TextChunker().chunk_text(all_text) 
 
-        embeddings, total_tokens = JinaAI().fetch_embeddings(chunks)
+        # Get user tokens from postgres
+        user_tokens = await get_user_tokens(user_id)
+
+        # Get embeddings from Jina AI
+
+        embeddings, total_tokens = JinaAI().fetch_embeddings(chunks, user_tokens)
         print(f"Embeddings: {len(embeddings)}")
         print(f"Total tokens used: {total_tokens}")
-        # For every chunk, store in postgres, obtain embeddings from Jina AI, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
+
+        # Update user tokens in postgres
+        if user_tokens - total_tokens <= 0:
+            await update_user_tokens(user_id, 0)
+        else:
+            await update_user_tokens(user_id, user_tokens - total_tokens)
+
+        # for len of embeddings, store in postgres, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
+
+        chunks = chunks[:len(embeddings)]
+        chunk_ids = await store_chunks(chunks)
+        print(f"Chunk IDs: {chunk_ids}")
+        
 
     except Exception as e:
         raise RuntimeError(f"Error processing the PDF file '{key}': {str(e)}")

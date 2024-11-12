@@ -6,6 +6,10 @@ import dotenv
 from app.services.s3_operations import S3Operations
 from app.processors.pdf_processor import process_pdf
 from app.processors.text_processor import process_text
+import asyncio
+from app.prisma.prisma_client import Prisma
+
+
 
 dotenv.load_dotenv()
 
@@ -15,9 +19,12 @@ redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 # Initialize Redis connection
 redis_conn = Redis.from_url(redis_url)
 
-def process_file(data):
+async def process_file(data):
     """Process the data received from the queue."""
     try:
+
+        await Prisma.connect()
+
         if isinstance(data, bytes):
             data = data.decode('utf-8')
 
@@ -34,16 +41,16 @@ def process_file(data):
 
         # Determine file type and process accordingly
         if key.endswith('.pdf'):
-            process_pdf(file_bytes, key, chatbot_id, user_id)
+            await process_pdf(file_bytes, key, chatbot_id, user_id)
         elif key.endswith('.txt'):
-            process_text(file_bytes, key, chatbot_id, user_id)
+            await process_text(file_bytes, key, chatbot_id, user_id)
         else:
             print(f"Unsupported file type for '{key}'")
             
     except Exception as e:
         print(f"Error processing task: {str(e)}")
 
-def start_worker():
+async def start_worker():
     """Continuously listen for new jobs in the Redis queue."""
     while True:
         try:
@@ -52,11 +59,12 @@ def start_worker():
             if data:
                 # The data returned by brpop is a tuple (queue_name, message)
                 message = data[1]  # Extract the message from the tuple
-                process_file(message)  # Process the message
+                await process_file(message)  # Process the message
         except Exception as err:
             print(f"Error {err}")
             time.sleep(1)  # Optional: Sleep before retrying
 
+
 if __name__ == "__main__":
     print("Worker is starting...")
-    start_worker()
+    asyncio.run(start_worker())
