@@ -2,6 +2,8 @@ from app.core.text_chunker import TextChunker
 from app.core.jina_ai import JinaAI
 from app.core.user import get_user_tokens, update_user_tokens
 from app.core.store_chunks import store_chunks
+from app.core.pinecone import upsert_chunks
+
 async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
     Process the downloaded text bytes and extract content.
@@ -15,10 +17,7 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
     """
     try:
         text_content = text_bytes.decode('utf-8')  # Decode bytes to string
-        print(f"Content of '{key}':\n{text_content}\n")
         
-
-
 
         # Chunking the text into smaller chunks
         chunks = TextChunker().chunk_text(text_content)
@@ -42,7 +41,9 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
 
         chunks = chunks[:len(embeddings)]
         chunk_ids = await store_chunks(chunks)
-        print(f"Chunk IDs: {chunk_ids}")
+
+         # Store in pinecone
+        await upsert_chunks(chunk_ids, embeddings, chatbot_id)
         
     except Exception as e:
         raise RuntimeError(f"Error processing the text file '{key}': {str(e)}")

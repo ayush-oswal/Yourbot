@@ -4,6 +4,8 @@ from app.core.text_chunker import TextChunker
 from app.core.jina_ai import JinaAI
 from app.core.user import get_user_tokens, update_user_tokens
 from app.core.store_chunks import store_chunks
+from app.core.pinecone import upsert_chunks
+
 
 async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
@@ -22,11 +24,10 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
         
         # Iterate through the pages and extract text or perform any other processing
         all_text = ""
-        for page_num, page in enumerate(pdf_reader.pages):
+        for page in enumerate(pdf_reader.pages):
             text = page.extract_text()  # Extract text from the page
-            print(f"Page {page_num + 1} content:\n{text}\n")
             all_text += text
-        print(f"Processed PDF file: {key}")
+        print(f"Processing PDF file: {key}")
 
         # Chunking the text into smaller chunks
         chunks = TextChunker().chunk_text(all_text) 
@@ -50,7 +51,9 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
 
         chunks = chunks[:len(embeddings)]
         chunk_ids = await store_chunks(chunks)
-        print(f"Chunk IDs: {chunk_ids}")
+
+        # Store in pinecone
+        await upsert_chunks(chunk_ids, embeddings, chatbot_id)
         
 
     except Exception as e:
