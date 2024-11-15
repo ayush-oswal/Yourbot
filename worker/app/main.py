@@ -7,7 +7,7 @@ from app.services.s3_operations import S3Operations
 from app.processors.pdf_processor import process_pdf
 from app.processors.text_processor import process_text
 import asyncio
-from app.prisma.prisma_client import Prisma
+from app.prisma.prisma_client import get_prisma
 
 
 
@@ -23,7 +23,7 @@ async def process_file(data):
     """Process the data received from the queue."""
     try:
 
-        await Prisma.connect()
+        Prisma = await get_prisma()
 
         if isinstance(data, bytes):
             data = data.decode('utf-8')

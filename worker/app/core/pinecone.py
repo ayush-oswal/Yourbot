@@ -10,14 +10,14 @@ Index = pc.Index("yourbot")
 
 async def upsert_chunks(chunk_ids, embeddings, chatbot_id):
     try:
-        Index.delete(delete_all=True)
+        # Index.delete(delete_all=True)
         vectors_to_upsert = [{
             'id': str(chunk_ids[i]),
             'values': embeddings[i]['embedding'],
             'metadata': {"chatbot_id": str(chatbot_id), "chunk_id": str(chunk_ids[i])}
         } for i in range(len(embeddings))]
         
-        # Batch upsert instead of individual upserts
+        # Batch upsert
         response = Index.upsert(
             vectors=vectors_to_upsert
         )

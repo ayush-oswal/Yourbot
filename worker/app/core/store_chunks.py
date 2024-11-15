@@ -1,4 +1,4 @@
-from app.prisma.prisma_client import Prisma
+from app.prisma.prisma_client import get_prisma
 
 async def store_chunks(chunks: list[str]):
     """
@@ -6,6 +6,7 @@ async def store_chunks(chunks: list[str]):
     """
     try:
         chunk_ids = []
+        Prisma = await get_prisma()
         for chunkText in chunks:
             chunk = await Prisma.chunk.create(
             data = {
