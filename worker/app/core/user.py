@@ -7,5 +7,7 @@ async def get_user_tokens(user_id: str) -> int:
 
 async def update_user_tokens(user_id: str, tokens: int) -> None:
     Prisma = await get_prisma()
+    if tokens < 0:
+        tokens = 0
     await Prisma.user.update(where={"id": user_id}, data={"tokens": tokens})
 

@@ -32,10 +32,7 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
         print(f"Total tokens used: {total_tokens}")
 
         # Update user tokens in postgres
-        if user_tokens - total_tokens <= 0:
-            await update_user_tokens(user_id, 0)
-        else:
-            await update_user_tokens(user_id, user_tokens - total_tokens)     
+        await update_user_tokens(user_id, user_tokens - total_tokens)     
 
         # for len of embeddings, store in postgres, then store in pinecone along with metadata which includes the chatbot_id and chunk_id from postgres
 
