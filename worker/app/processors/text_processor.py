@@ -1,6 +1,6 @@
 from app.core.text_chunker import TextChunker
 from app.core.jina_ai import JinaAI
-from app.core.user import get_user_tokens, update_user_tokens
+from app.core.user import get_user_details, update_user_tokens
 from app.core.store_chunks import store_chunks
 from app.core.pinecone import upsert_chunks
 
@@ -23,7 +23,7 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
         chunks = TextChunker().chunk_text(text_content)
 
         # Get user tokens from postgres
-        user_tokens = await get_user_tokens(user_id)
+        user_tokens, user_email = await get_user_details(user_id)
 
         # Get embeddings from Jina AI
 
@@ -41,6 +41,8 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
 
          # Store in pinecone
         await upsert_chunks(chunk_ids, embeddings, chatbot_id)
+
+        # Send email to user
         
     except Exception as e:
         raise RuntimeError(f"Error processing the text file '{key}': {str(e)}")

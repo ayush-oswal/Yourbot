@@ -2,7 +2,8 @@ import google.generativeai as genai
 import dotenv
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+import time
+from constants.prompts import SYSTEM_INSTRUCTION
 
 dotenv.load_dotenv()
 
@@ -10,15 +11,20 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction="Provide a very brief, high-level summary, please emphazise on the following points: length of the summary should be proportional to the length of the document but not more than 75 words, the smaller the document the shorter the summary should be. Focus only on the document's main purpose. Summarize what the document is about, not the content of the document itself. Again, the summary should be very brief and to the point.")
+model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction=SYSTEM_INSTRUCTION)
 
 class TextChunker:
     def __init__(self):
         pass
     
     def get_summary(self, text: str):
-        summary = model.generate_content(text)
-        return summary.text
+        while True:
+            try:
+                summary = model.generate_content(text).text
+                return summary
+            except Exception as e:
+                print(f"Error occurred: {e}. Retrying in 20 seconds...")
+                time.sleep(20)
 
     def chunk_text(self, text: str, chunk_size=350, chunk_overlap=50):
         summary = self.get_summary(text)

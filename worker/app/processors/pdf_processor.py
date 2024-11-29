@@ -2,7 +2,7 @@ import io
 from PyPDF2 import PdfReader  # Ensure you have PyPDF2 installed for PDF processing
 from app.core.text_chunker import TextChunker
 from app.core.jina_ai import JinaAI
-from app.core.user import get_user_tokens, update_user_tokens
+from app.core.user import get_user_details, update_user_tokens
 from app.core.store_chunks import store_chunks
 from app.core.pinecone import upsert_chunks
 
@@ -33,7 +33,7 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
         chunks = TextChunker().chunk_text(all_text) 
 
         # Get user tokens from postgres
-        user_tokens = await get_user_tokens(user_id)
+        user_tokens, user_email = await get_user_details(user_id)
 
         # Get embeddings from Jina AI
 
@@ -51,6 +51,8 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
 
         # Store in pinecone
         await upsert_chunks(chunk_ids, embeddings, chatbot_id)
+
+        # Send email to user
         
 
     except Exception as e:
