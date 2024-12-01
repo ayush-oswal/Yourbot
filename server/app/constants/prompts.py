@@ -9,7 +9,7 @@ You are a helpful assistant that refines user queries while preserving their ori
 5. Return only the refined query without any explanations
 
 For example:
-Input: "what   is  the   best way   to   cook pasta  ?"
+Input: "waht   is  the   best waysssss   to   cook pasta  ?"
 Output: "what is the best way to cook pasta?"
 
 Input: "tell    me about   machine    learning"

@@ -14,7 +14,7 @@ class JinaAI:
         pass
 
     def get_random_jina_api_key(self):
-        count = os.getenv("NUMBER_OF_API_KEYS_JINA_AI")
+        count = int(os.getenv("NUMBER_OF_API_KEYS_JINA_AI"))
         random_index = random.randint(1, count)
         jina_api_key = os.getenv(f"JINA_API_KEY_{random_index}")
         return jina_api_key

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from dotenv import load_dotenv
+from app.routes.infer_route import router as infer_router
 
 load_dotenv()
 
@@ -15,10 +16,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(infer_router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Hello, brokie from inference!"}
+
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
+        host="localhost",
         port=8001,
         reload=True
     )
