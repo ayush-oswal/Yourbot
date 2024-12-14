@@ -3,7 +3,7 @@ import dotenv
 import os
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import time
-from constants.prompts import SYSTEM_INSTRUCTION
+from app.constants.prompts import SYSTEM_INSTRUCTION
 
 dotenv.load_dotenv()
 
@@ -59,13 +59,14 @@ class TextChunker:
             if i > 0:
                 previous_chunk = chunks[i - 1]
                 overlap_text = previous_chunk[-chunk_overlap:]  # Extract overlap from the end of the previous chunk
-                combined_chunk = f"{summary}\n{overlap_text}{chunk}"  # Add overlap and summary to the current chunk
+                combined_chunk = f"{overlap_text}{chunk}\n{summary}"  # Add overlap and summary to the current chunk
             else:
                 # For the first chunk, we don't have a previous chunk to get overlap from
-                combined_chunk = f"{summary}{chunk}"
+                combined_chunk = f"{chunk}\n{summary}"
 
             # Append the formatted chunk to the list and print it
             formatted_chunks.append(combined_chunk)
+            print(combined_chunk)
 
         print(f"Total number of chunks: {len(formatted_chunks)}")
         return formatted_chunks

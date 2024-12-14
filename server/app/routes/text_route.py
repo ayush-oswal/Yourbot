@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.get("/")
-async def get_text_upload_url(extension: str = "txt", user_data: dict = Depends(get_current_user)):
+async def get_text_upload_url(user_data: dict = Depends(get_current_user)):
     """Generate a presigned URL and unique filename for text upload."""
     try:
         #check if user has tokens
@@ -20,7 +20,7 @@ async def get_text_upload_url(extension: str = "txt", user_data: dict = Depends(
             return {"message": "Not enough tokens"}
         if not user or not user.tokens:
             raise HTTPException(status_code=403, detail="User does not have valid tokens")
-        key = generate_unique_filename("uploads/text", extension)
+        key = generate_unique_filename("uploads/text", "txt")
         upload_url = generate_presigned_upload_url(key, "text/plain")
         return {"key": key, "upload_url": upload_url}
     except Exception as e:

@@ -3,14 +3,17 @@ from pydantic import BaseModel
 from app.prisma.prisma_client import Prisma
 from app.middleware.get_user import get_current_user
 import google.generativeai as genai
-from constants.prompts import QUERY_MODIFICATION_INSTRUCTION
+from app.constants.prompts import QUERY_MODIFICATION_INSTRUCTION
 import os
+import httpx
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction=QUERY_MODIFICATION_INSTRUCTION)
+
+INFERENCE_SERVER_URL = os.getenv("INFERENCE_SERVER_URL") or "http://localhost:8001"
 
 router = APIRouter(
     prefix="/inference",
@@ -30,6 +33,12 @@ class ExternalInferenceData(BaseModel):
 
 async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]) ->str :
     refined_query = model.generate_content(query).text
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            INFERENCE_SERVER_URL + "/infer",
+            json={"query": refined_query, "chatbot_id": chatbot_id, "previous_messages": previous_messages}
+        )
+        return response.json()
 
 @router.post("/")
 async def inference(data: InferenceData, user_data: dict = Depends(get_current_user)):

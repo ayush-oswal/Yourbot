@@ -15,5 +15,5 @@ async def get_matches(embedding, chatbot_id, top_k=10):
         top_k=top_k,
         include_metadata=True
     )
-    print(response)
+    print(response["matches"]) # this is the list of objects, each object has a id, metadata {chatbot_id, chunk_id}, score and values
     return response["matches"]

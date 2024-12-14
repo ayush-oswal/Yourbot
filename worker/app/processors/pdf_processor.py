@@ -24,7 +24,7 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
         
         # Iterate through the pages and extract text or perform any other processing
         all_text = ""
-        for page in enumerate(pdf_reader.pages):
+        for page in pdf_reader.pages:
             text = page.extract_text()  # Extract text from the page
             all_text += text
         print(f"Processing PDF file: {key}")
