@@ -52,7 +52,7 @@ async def process_pdf(pdf_bytes: bytes, key: str, chatbot_id: str, user_id: str)
         # Store in pinecone
         await upsert_chunks(chunk_ids, embeddings, chatbot_id)
 
-        # Send email to user
+        # Send email to user of successful processing and also if 0 tokens left
         
 
     except Exception as e:

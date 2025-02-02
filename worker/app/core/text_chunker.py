@@ -26,7 +26,7 @@ class TextChunker:
                 print(f"Error occurred: {e}. Retrying in 20 seconds...")
                 time.sleep(20)
 
-    def chunk_text(self, text: str, chunk_size=350, chunk_overlap=50):
+    def chunk_text(self, text: str, chunk_size=550, chunk_overlap=75):
         summary = self.get_summary(text)
         chunks = self.text_splitter(text,summary, chunk_size, chunk_overlap)
         return chunks

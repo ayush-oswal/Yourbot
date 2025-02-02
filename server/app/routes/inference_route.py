@@ -6,6 +6,7 @@ import google.generativeai as genai
 from app.constants.prompts import QUERY_MODIFICATION_INSTRUCTION
 import os
 import httpx
+from fastapi.responses import StreamingResponse
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -31,15 +32,20 @@ class ExternalInferenceData(BaseModel):
     previous_messages: list[dict]
     api_key: str
 
-async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]) ->str :
+async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]):
     refined_query = model.generate_content(query).text
+    print(refined_query)
     async with httpx.AsyncClient() as client:
         response = await client.post(
             INFERENCE_SERVER_URL + "/infer",
-            json={"query": refined_query, "chatbot_id": chatbot_id, "previous_messages": previous_messages}
+            json={"query": refined_query, "chatbot_id": chatbot_id, "previous_messages": previous_messages},
+            headers={"Accept": "text/event-stream"},
+            stream=True
         )
-        return response.json()
+        async for chunk in response.aiter_bytes():
+            yield chunk
 
+            
 @router.post("/")
 async def inference(data: InferenceData, user_data: dict = Depends(get_current_user)):
     chatbot = await Prisma.chatbot.find_unique(where={"id": data.chatbot_id, "userId": user_data["user_id"]})
@@ -47,8 +53,7 @@ async def inference(data: InferenceData, user_data: dict = Depends(get_current_u
         raise HTTPException(status_code=403, detail="You are not the owner of this chatbot")
     
     # call the inference server route here with post
-    response = await get_answer(chatbot_id=data.chatbot_id, query=data.query, previous_messages=data.previous_messages)
-    return {"answer": response}
+    return StreamingResponse(get_answer(chatbot_id=data.chatbot_id, query=data.query, previous_messages=data.previous_messages), media_type="text/event-stream")
     
     
 @router.post("/external")
@@ -67,7 +72,5 @@ async def external_inference(data: ExternalInferenceData):
         raise HTTPException(status_code=403, detail="You do not have access to this chatbot")
     
     # call the inference server route here with post
-
-    response = await get_answer(chatbot_id=data.chatbot_id, query=data.query, previous_messages=data.previous_messages)
-    return {"answer": response}
+    return StreamingResponse(get_answer(chatbot_id=data.chatbot_id, query=data.query, previous_messages=data.previous_messages), media_type="text/event-stream")
     

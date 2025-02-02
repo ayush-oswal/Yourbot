@@ -42,7 +42,7 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
          # Store in pinecone
         await upsert_chunks(chunk_ids, embeddings, chatbot_id)
 
-        # Send email to user
+        # Send email to user of successful processing and also if 0 tokens left
         
     except Exception as e:
         raise RuntimeError(f"Error processing the text file '{key}': {str(e)}")
