@@ -1,5 +1,4 @@
 from app.prisma.prisma_client import get_prisma
-
 async def store_chunks(chunks: list[str]):
     """
     Store chunks in postgres

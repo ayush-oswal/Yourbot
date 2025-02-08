@@ -33,26 +33,38 @@ class ExternalInferenceData(BaseModel):
     previous_messages: list[dict]
     api_key: str
 
+
 async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]):
     refined_query = model.generate_content(query).text
     print(refined_query)
-    
-    await Prisma.queries.create(
-        data = {
-            "query": refined_query,
-            "chatbotId": chatbot_id
-        }
-    )
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            INFERENCE_SERVER_URL + "/infer",
-            json={"query": refined_query, "chatbot_id": chatbot_id, "previous_messages": previous_messages},
-            headers={"Accept": "text/event-stream"},
-            stream=True
-        )
-        async for chunk in response.aiter_bytes():
-            yield chunk
+    # Create client with longer timeout
+    async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as client:
+        try:
+            async with client.stream(
+                "POST",
+                INFERENCE_SERVER_URL + "/infer",
+                json={
+                    "query": refined_query, 
+                    "chatbot_id": chatbot_id, 
+                    "previous_messages": previous_messages
+                },
+                headers={
+                    "Accept": "text/event-stream",
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                }
+            ) as response:
+                async for chunk in response.aiter_text():
+                    if chunk:
+                        yield chunk.encode('utf-8') 
+        except httpx.ReadTimeout as e:
+            print(f"Timeout error: {e}")
+            yield b"Error: Request timed out"
+        except Exception as e:
+            print(f"Error during streaming: {e}")
+            yield f"Error: {str(e)}".encode('utf-8')
+
 
             
 @router.post("/")

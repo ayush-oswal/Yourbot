@@ -16,10 +16,10 @@ async def get_file_upload_url(user_data: dict = Depends(get_current_user)):
     try:
         #check if user has tokens
         user = await Prisma.user.find_unique(where={"id": user_data["user_id"]})
-        if user.tokens<=0 : 
-            return {"message": "Not enough tokens"}
         if not user or not user.tokens:
             raise HTTPException(status_code=403, detail="User does not have valid tokens")
+        if user.tokens<=0 : 
+            return {"message": "Not enough tokens"}
         key = generate_unique_filename("uploads/files", "pdf")
         upload_url = generate_presigned_upload_url(key, "application/pdf")
         return {"key": key, "upload_url": upload_url}

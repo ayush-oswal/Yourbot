@@ -17,6 +17,17 @@ class InferRequest(BaseModel):
 @router.post("/infer")
 async def infer(request: InferRequest):
     # get embedding of query, search pinecone index for similar docs top k, use chunk_id in metadata to obtain chunk text, then use groq to generate response
+
+    Prisma = await get_prisma();
+
+    await Prisma.queries.create(
+        data = {
+            "query": request.query,
+            "chatbotId": request.chatbot_id
+        }
+    )
+
+
     jina_ai = JinaAI()
     embedding = jina_ai.fetch_embeddings(request.query)
     matches = await get_matches(embedding, request.chatbot_id)
@@ -44,16 +55,23 @@ async def infer(request: InferRequest):
 
     context = "\n".join([chunk.chunkText for chunk in chunks])
 
+    chatbot = await Prisma.chatbot.find_unique(
+        where={
+            "id": request.chatbot_id
+        }
+    )
+
+    description = chatbot.description
+
+
     messages = [
         {
             "role": "system",
-            "content": INFER_PROMPT.format(context=context, previous_messages=request.previous_messages)
+            "content": INFER_PROMPT.format(description=description, context=context, previous_messages=request.previous_messages)
         }
     ]
 
     messages.append({"role": "user", "content": request.query})
-
-    print(messages)
 
     async def generate_response():
         stream = client.chat.completions.create(
@@ -64,8 +82,15 @@ async def infer(request: InferRequest):
             stream=True
         )
 
+        response = ""
+
         for chunk in stream:
             if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+                content = chunk.choices[0].delta.content
+                response += content
+                yield f"data: {content}\n\n"
+
+        print(response)
+
 
     return StreamingResponse(generate_response(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "Content-Type": "text/event-stream"})

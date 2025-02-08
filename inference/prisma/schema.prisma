@@ -12,7 +12,7 @@ model User {
   id        String    @id @default(uuid())
   email     String    @unique
   username  String
-  apikey    String    @default(uuid())
+  apiKey    String    @unique @default(uuid())
   tokens    Int       @default(50000)
   createdAt DateTime  @default(now())
   chatbots  Chatbot[]
@@ -24,15 +24,16 @@ model Chatbot {
   description String
   userId      String
   user        User     @relation(fields: [userId], references: [id])
-  queries     queries[]
+  queries     Queries[]
 }
+
 
 model Chunk {
   id        String @id @default(uuid())
   chunkText String
 }
 
-model queries {
+model Queries {
   id        String @id @default(uuid())
   query     String
   chatbotId String

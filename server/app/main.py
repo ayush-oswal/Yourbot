@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
     print("Disconnected from Prisma.")
 
 app = FastAPI(lifespan=lifespan)
+
 
 # Configure CORS
 app.add_middleware(
