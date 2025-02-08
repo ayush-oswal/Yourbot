@@ -7,6 +7,7 @@ from app.constants.prompts import QUERY_MODIFICATION_INSTRUCTION
 import os
 import httpx
 from fastapi.responses import StreamingResponse
+from app.prisma.prisma_client import Prisma
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -35,6 +36,14 @@ class ExternalInferenceData(BaseModel):
 async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]):
     refined_query = model.generate_content(query).text
     print(refined_query)
+    
+    await Prisma.queries.create(
+        data = {
+            "query": refined_query,
+            "chatbotId": chatbot_id
+        }
+    )
+
     async with httpx.AsyncClient() as client:
         response = await client.post(
             INFERENCE_SERVER_URL + "/infer",
