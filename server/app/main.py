@@ -6,6 +6,7 @@ from app.routes.auth_route import router as auth_router
 from app.routes.process_route import router as process_router
 from app.routes.inference_route import router as inference_router
 from app.routes.chatbot_route import router as chatbot_router
+from app.routes.user_route import router as user_router
 from contextlib import asynccontextmanager
 from app.prisma.prisma_client import Prisma
 import os
@@ -47,6 +48,7 @@ app.include_router(auth_router)
 app.include_router(process_router)
 app.include_router(inference_router)
 app.include_router(chatbot_router)
+app.include_router(user_router)
 
 @app.get("/")
 def read_root():

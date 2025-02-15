@@ -46,3 +46,27 @@ async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_curr
         return {"message": "Chatbot updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{chatbot_id}/queries")
+async def get_chatbot_queries(chatbot_id: str, user_data: dict = Depends(get_current_user)):
+    try:
+        chatbot = await Prisma.chatbot.find_first(
+            where={
+                "id": chatbot_id,
+                "userId": user_data["user_id"]
+            }
+        )
+        
+        if not chatbot:
+            raise HTTPException(status_code=404, detail="Chatbot not found")
+            
+        queries = await Prisma.queries.find_many(
+            where={
+                "chatbotId": chatbot_id
+            }
+        )
+        
+        return queries
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -33,22 +33,12 @@ async def login(data: LoginData, response: Response):
         # Create JWT with user ID
         token = create_jwt({"user_id": user.id})
         
-        # Set cookie with JWT
-        response.set_cookie(
-            key="access_token",
-            value=token,
-            httponly=True,
-            secure=True,
-            samesite="lax"
-        )
+        # Return token in response
+        return {
+            "message": "Successfully logged in",
+            "user_id": user.id,
+            "token": token
+        }
         
-        return {"message": "Successfully logged in", "user_id": user.id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/logout")
-def logout(response: Response):
-    """Clear the JWT cookie."""
-    response.delete_cookie(key="access_token")
-    return {"message": "Successfully logged out"}
