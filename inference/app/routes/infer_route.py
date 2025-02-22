@@ -6,13 +6,23 @@ from app.core.jina_ai import JinaAI
 from app.core.pinecone import get_matches
 from app.core.groq import client
 from app.constants.prompts import INFER_PROMPT
+import google.generativeai as genai
+import os
+import asyncio
 
 router = APIRouter()
+
+class Message(BaseModel):
+    role: str
+    content: str
 
 class InferRequest(BaseModel):
     query: str
     chatbot_id: str
-    previous_messages: list[str]
+    previous_messages: list[Message]
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 
 @router.post("/infer")
 async def infer(request: InferRequest):
@@ -47,11 +57,14 @@ async def infer(request: InferRequest):
     # pass the matches to groq to generate response
 
 
-    # modify the previous messages to be in structure such that messages with even indices are user messages and odd indices are assistant messages
-    #directly append the role in the message itself
-    for i in range(0, len(request.previous_messages), 2):
-        request.previous_messages[i] = "role : user \n content : " + request.previous_messages[i]
-        request.previous_messages[i + 1] = "role : assistant \n content : " + request.previous_messages[i + 1]
+    stringified_messages = []
+    for i, message in enumerate(request.previous_messages):
+        if i % 2 == 0:
+            stringified_messages.append(f"User: {message.content}")
+        else:
+            stringified_messages.append(f"Assistant: {message.content}")
+
+    print(stringified_messages)
 
     context = "\n".join([chunk.chunkText for chunk in chunks])
 
@@ -67,30 +80,41 @@ async def infer(request: InferRequest):
     messages = [
         {
             "role": "system",
-            "content": INFER_PROMPT.format(description=description, context=context, previous_messages=request.previous_messages)
+            "content": INFER_PROMPT.format(description=description, context=context, previous_messages=stringified_messages)
         }
     ]
 
     messages.append({"role": "user", "content": request.query})
 
     async def generate_response():
-        stream = client.chat.completions.create(
-            messages=messages,
-            model="mixtral-8x7b-32768",
-            temperature=0.5,
-            max_tokens=4096,
-            stream=True
-        )
+        # stream = client.chat.completions.create(
+        #     messages=messages,
+        #     model="mixtral-8x7b-32768",
+        #     temperature=0.5,
+        #     max_tokens=4096,
+        #     stream=True
+        # )
 
-        response = ""
+        # response = ""
 
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                content = chunk.choices[0].delta.content
-                response += content
-                yield f"data: {content}\n\n"
+        # for chunk in stream:
+        #     if chunk.choices[0].delta.content is not None:
+        #         content = chunk.choices[0].delta.content
+        #         response += content
+        #         yield f"{content}"
 
-        print(response)
+        # print(response)
+
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=INFER_PROMPT.format(description=description, context=context, previous_messages=stringified_messages))
+
+        response = model.generate_content(request.query)
+        full_response = response.text
+        print(full_response)
+        chunk_size = 10 
+        for i in range(0, len(full_response), chunk_size):
+            chunk = full_response[i:i+chunk_size]
+            yield f"{chunk}"
+            await asyncio.sleep(0.05)
 
 
     return StreamingResponse(generate_response(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "Content-Type": "text/event-stream"})

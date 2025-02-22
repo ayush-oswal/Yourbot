@@ -13,7 +13,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction=QUERY_MODIFICATION_INSTRUCTION)
+model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=QUERY_MODIFICATION_INSTRUCTION)
 
 INFERENCE_SERVER_URL = os.getenv("INFERENCE_SERVER_URL") or "http://localhost:8001"
 
@@ -36,8 +36,6 @@ class ExternalInferenceData(BaseModel):
 
 async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict]):
     refined_query = model.generate_content(query).text
-    print(refined_query)
-
     # Create client with longer timeout
     async with httpx.AsyncClient(timeout=httpx.Timeout(300.0)) as client:
         try:

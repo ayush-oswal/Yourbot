@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from app.middleware.get_user import get_current_user
 from app.prisma.prisma_client import Prisma
 from pydantic import BaseModel
@@ -16,6 +16,19 @@ class ChatbotEditData(BaseModel):
     chatbot_id: str
     name: str
     description: str
+
+
+@router.get("/{chatbot_id}")
+async def get_chatbots(chatbot_id: str, user_data: dict = Depends(get_current_user)):
+    try:
+        chatbot = await Prisma.chatbot.find_first(
+            where={"userId": user_data["user_id"], "id": chatbot_id}
+        )
+        if not chatbot:
+            raise HTTPException(status_code=404, detail="Chatbot not found")
+        return chatbot
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/create")
 async def create_chatbot(data: ChatbotData, user_data: dict = Depends(get_current_user)):
@@ -48,7 +61,7 @@ async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_curr
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{chatbot_id}/queries")
-async def get_chatbot_queries(chatbot_id: str, user_data: dict = Depends(get_current_user)):
+async def get_chatbot_queries(chatbot_id: str, page_number: int = Query(default=1), user_data: dict = Depends(get_current_user)):
     try:
         chatbot = await Prisma.chatbot.find_first(
             where={
@@ -60,13 +73,22 @@ async def get_chatbot_queries(chatbot_id: str, user_data: dict = Depends(get_cur
         if not chatbot:
             raise HTTPException(status_code=404, detail="Chatbot not found")
             
-        queries = await Prisma.queries.find_many(
+        total_count = await Prisma.queries.count(
             where={
                 "chatbotId": chatbot_id
             }
         )
         
-        return queries
+        queries = await Prisma.queries.find_many(
+            where={
+                "chatbotId": chatbot_id
+            },
+            skip=(page_number - 1) * 15,
+            take=15,
+            order={"createdAt": "desc"}
+        )
+        
+        return {"total_count": total_count, "queries": queries}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

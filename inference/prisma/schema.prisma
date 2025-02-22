@@ -38,4 +38,5 @@ model Queries {
   query     String
   chatbotId String
   chatbot   Chatbot @relation(fields: [chatbotId], references: [id])
+  createdAt DateTime @default(now())
 }
