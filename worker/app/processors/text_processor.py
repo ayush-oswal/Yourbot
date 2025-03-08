@@ -3,6 +3,7 @@ from app.core.jina_ai import JinaAI
 from app.core.user import get_user_details, update_user_tokens
 from app.core.store_chunks import store_chunks
 from app.core.pinecone import upsert_chunks
+from app.services.send_mail import send_mail
 
 async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: str):
     """
@@ -43,6 +44,9 @@ async def process_text(text_bytes: bytes, key: str, chatbot_id: str, user_id: st
         await upsert_chunks(chunk_ids, embeddings, chatbot_id)
 
         # Send email to user of successful processing and also if 0 tokens left
+        await send_mail(subject="Text processed successfully", body="Your text has been processed successfully", to_email=user_email)
+        if user_tokens == 0:
+            await send_mail(subject="Your tokens have run out", body="Please recharge your tokens", to_email=user_email)
         
     except Exception as e:
         raise RuntimeError(f"Error processing the text file '{key}': {str(e)}")

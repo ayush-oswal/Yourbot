@@ -105,9 +105,9 @@ async def infer(request: InferRequest):
 
         # print(response)
 
-        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=INFER_PROMPT.format(description=description, context=context, previous_messages=stringified_messages))
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=INFER_PROMPT.format(description=description))
 
-        response = model.generate_content(request.query)
+        response = model.generate_content(f"Query: {request.query}\n\nContext: {context}\n\nPrevious Messages: {stringified_messages}")
         full_response = response.text
         print(full_response)
         chunk_size = 10 

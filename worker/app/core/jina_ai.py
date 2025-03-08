@@ -16,13 +16,12 @@ class JinaAI:
     def get_random_jina_api_key(self):
         count = int(os.getenv("NUMBER_OF_API_KEYS_JINA_AI"))
         random_index = random.randint(1, count)
-        jina_api_key = os.getenv(f"JINA_API_KEY_{random_index}")
+        jina_api_key = os.getenv(f"JINA_API_KEY_{random_index}") or os.getenv("JINA_API_KEY_1")
         return jina_api_key
     
     def fetch_embeddings(self, chunks, batch_size=4, user_tokens=0):
         print(f"Fetching embeddings for {len(chunks)} chunks")
-        # jina_api_key = self.get_random_jina_api_key()
-        jina_api_key = "jina_fcc1305fd47641bc85f626fdcc049bdfi3gxrnbzsiSm34xdOKXCh7qdIWA1"
+        jina_api_key = self.get_random_jina_api_key()
         url = "https://api.jina.ai/v1/embeddings"
         headers = {
             "Content-Type": "application/json",
