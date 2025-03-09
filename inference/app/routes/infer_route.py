@@ -9,6 +9,7 @@ from app.constants.prompts import INFER_PROMPT
 import google.generativeai as genai
 import os
 import asyncio
+from openai import OpenAI
 
 router = APIRouter()
 
@@ -22,6 +23,11 @@ class InferRequest(BaseModel):
     previous_messages: list[Message]
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+open_router_client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPEN_ROUTER_API_KEY")
+)
 
 
 @router.post("/infer")
@@ -104,15 +110,39 @@ async def infer(request: InferRequest):
 
         # print(response)
 
-        model = genai.GenerativeModel(model_name="gemini-2.0-flash",system_instruction=INFER_PROMPT.format(description=description, context=context, previous_messages=stringified_messages))
+        try:
+            completion = open_router_client.chat.completions.create(
+            model="deepseek/deepseek-r1:free",
+            messages=messages,
+            stream=True
+            )
+
+            for chunk in completion:
+                if chunk.choices[0].delta.content is not None:
+                    content = chunk.choices[0].delta.content
+                    yield content
+            return
+
+        except Exception as e:
+            print(f"DeepSeek Error: {e}")
+
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            system_instruction=INFER_PROMPT.format(
+                description=description, 
+                context=context, 
+                previous_messages=stringified_messages
+            )
+        )
 
         response = model.generate_content(request.query)
         full_response = response.text
         print(full_response)
-        chunk_size = 10 
+
+        chunk_size = 10  
         for i in range(0, len(full_response), chunk_size):
             chunk = full_response[i:i+chunk_size]
-            yield f"{chunk}"
+            yield chunk
             await asyncio.sleep(0.05)
 
 
