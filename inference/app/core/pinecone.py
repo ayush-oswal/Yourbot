@@ -16,4 +16,5 @@ async def get_matches(embedding, chatbot_id, top_k=10):
         include_metadata=True
     )
     # this is the list of objects, each object has a id, metadata {chatbot_id, chunk_id}, score and values
-    return response["matches"]
+    filtered_matches = [match for match in response['matches'] if match['score'] >= 0.20]
+    return filtered_matches

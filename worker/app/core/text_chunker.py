@@ -11,7 +11,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest",system_instruction=SYSTEM_INSTRUCTION)
+model = genai.GenerativeModel(model_name="gemini-2.5-pro-exp-03-25",system_instruction=SYSTEM_INSTRUCTION)
 
 class TextChunker:
     def __init__(self):
