@@ -40,6 +40,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: ["sh","-c"," prisma migrate deploy && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
 
   inference:
     build:
