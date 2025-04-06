@@ -127,7 +127,7 @@ async def infer(request: InferRequest):
             print(f"DeepSeek Error: {e}")
 
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-pro-exp-03-25",
+            model_name="gemini-2.0-flash-thinking-exp-01-21",
             system_instruction=INFER_PROMPT.format(
                 description=description, 
                 context=context, 
@@ -137,7 +137,6 @@ async def infer(request: InferRequest):
 
         response = model.generate_content(request.query)
         full_response = response.text
-        print(full_response)
 
         chunk_size = 10  
         for i in range(0, len(full_response), chunk_size):

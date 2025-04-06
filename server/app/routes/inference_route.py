@@ -13,7 +13,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(model_name="gemini-2.5-pro-exp-03-25",system_instruction=QUERY_MODIFICATION_INSTRUCTION)
+model = genai.GenerativeModel(model_name="gemini-2.0-flash-thinking-exp-01-21",system_instruction=QUERY_MODIFICATION_INSTRUCTION)
 
 INFERENCE_SERVER_URL = os.getenv("INFERENCE_SERVER_URL") or "http://localhost:8001"
 
