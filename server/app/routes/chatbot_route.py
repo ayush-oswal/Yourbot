@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from app.middleware.get_user import get_current_user
-from app.prisma.prisma_client import Prisma
+from app.prisma.prisma_client import get_prisma
 from pydantic import BaseModel
 
 router = APIRouter(
@@ -21,6 +21,7 @@ class ChatbotEditData(BaseModel):
 @router.get("/{chatbot_id}")
 async def get_chatbots(chatbot_id: str, user_data: dict = Depends(get_current_user)):
     try:
+        Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
             where={"userId": user_data["user_id"], "id": chatbot_id}
         )
@@ -33,6 +34,7 @@ async def get_chatbots(chatbot_id: str, user_data: dict = Depends(get_current_us
 @router.post("/create")
 async def create_chatbot(data: ChatbotData, user_data: dict = Depends(get_current_user)):
     try:
+        Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.create(
             data = {
                 "name": data.name,
@@ -47,6 +49,7 @@ async def create_chatbot(data: ChatbotData, user_data: dict = Depends(get_curren
 @router.post("/edit")
 async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_current_user)):
     try:
+        Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
             where = {"id": data.chatbot_id, "userId": user_data["user_id"]}
         )
@@ -63,6 +66,7 @@ async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_curr
 @router.get("/{chatbot_id}/queries")
 async def get_chatbot_queries(chatbot_id: str, page_number: int = Query(default=1), user_data: dict = Depends(get_current_user)):
     try:
+        Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
             where={
                 "id": chatbot_id,

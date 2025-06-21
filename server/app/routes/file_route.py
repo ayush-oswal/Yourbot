@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.services.s3Client import generate_presigned_upload_url
 from app.utils.filename import generate_unique_filename
 from app.middleware.get_user import get_current_user
-from app.prisma.prisma_client import Prisma
+from app.prisma.prisma_client import get_prisma
 
 
 router = APIRouter(
@@ -14,6 +14,7 @@ router = APIRouter(
 async def get_file_upload_url(user_data: dict = Depends(get_current_user)):
     """Generate a presigned URL and unique filename for file upload."""
     try:
+        Prisma = await get_prisma()
         #check if user has tokens
         user = await Prisma.user.find_unique(where={"id": user_data["user_id"]})
         if not user or not user.tokens:

@@ -66,7 +66,6 @@ class TextChunker:
 
             # Append the formatted chunk to the list and print it
             formatted_chunks.append(combined_chunk)
-            print(combined_chunk)
 
         print(f"Total number of chunks: {len(formatted_chunks)}")
         return formatted_chunks

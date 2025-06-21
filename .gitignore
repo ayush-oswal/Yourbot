@@ -1,0 +1,5 @@
+__pycache__
+.env
+*.pem
+*.ps1
+cmd.txt

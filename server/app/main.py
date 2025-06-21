@@ -7,27 +7,11 @@ from app.routes.process_route import router as process_router
 from app.routes.inference_route import router as inference_router
 from app.routes.chatbot_route import router as chatbot_router
 from app.routes.user_route import router as user_router
-from contextlib import asynccontextmanager
-from app.prisma.prisma_client import Prisma
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    print("Connecting to Prisma...")
-    await Prisma.connect()
-    print("Connected to Prisma.")
-    yield
-    # Shutdown
-    print("Disconnecting from Prisma...")
-    await Prisma.disconnect()
-    print("Disconnected from Prisma.")
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 # Configure CORS

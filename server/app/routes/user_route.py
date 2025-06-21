@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
-from app.prisma.prisma_client import Prisma
+from fastapi import APIRouter, Depends
+from app.prisma.prisma_client import get_prisma
 from app.middleware.get_user import get_current_user
 
 router = APIRouter(
@@ -10,6 +10,7 @@ router = APIRouter(
 
 @router.get("/")
 async def get_user(user_data: dict = Depends(get_current_user)):
+    Prisma = await get_prisma()
     user = await Prisma.user.find_unique(
         where={'id': user_data["user_id"]},
         include={

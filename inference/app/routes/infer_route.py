@@ -34,7 +34,7 @@ open_router_client = OpenAI(
 async def infer(request: InferRequest):
     # get embedding of query, search pinecone index for similar docs top k, use chunk_id in metadata to obtain chunk text, then use groq to generate response
 
-    Prisma = await get_prisma();
+    Prisma = await get_prisma()
 
     await Prisma.queries.create(
         data = {
@@ -127,7 +127,7 @@ async def infer(request: InferRequest):
             print(f"DeepSeek Error: {e}")
 
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash-thinking-exp-01-21",
+            model_name="gemini-2.0-flash",
             system_instruction=INFER_PROMPT.format(
                 description=description, 
                 context=context, 

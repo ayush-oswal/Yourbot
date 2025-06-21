@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel
 from app.utils.jwt import create_jwt
-from app.prisma.prisma_client import Prisma
+from app.prisma.prisma_client import get_prisma
+from jose import jwt, JWTError
+import os
 
 router = APIRouter(
     prefix="/auth",
@@ -9,31 +11,45 @@ router = APIRouter(
 )
 
 class LoginData(BaseModel):
-    email: str
-    name: str
+    token: str
 
 @router.post("/login")
 async def login(data: LoginData, response: Response):
     """Login or register user and set JWT cookie."""
     try:
-        # Try to find existing user
+
+        nextauth_secret = os.getenv("NEXTAUTH_SECRET")
+        if not nextauth_secret:
+            raise HTTPException(status_code=500, detail="NextAuth secret not configured")
+
+        try:
+            payload = jwt.decode(data.token, nextauth_secret)
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid NextAuth token")
+
+
+        email = payload.get('email')
+        name = payload.get('name')
+        
+        if not email:
+            raise HTTPException(status_code=401, detail="No email in token")
+
+        Prisma = await get_prisma()
+
         user = await Prisma.user.find_unique(
-            where={'email': data.email}
+            where={'email': email}
         )
         
-        # If user doesn't exist, create new user
         if not user:
             user = await Prisma.user.create(
                 data={
-                    'email': data.email,
-                    'username': data.name
+                    'email': email,
+                    'username': name
                 }
             )
         
-        # Create JWT with user ID
         token = create_jwt({"user_id": user.id})
         
-        # Return token in response
         return {
             "message": "Successfully logged in",
             "user_id": user.id,
