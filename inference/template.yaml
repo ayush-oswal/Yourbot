@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: FastAPI with streaming responses on Lambda
+
+Resources:
+  FastAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 512
+      Timeout: 900  # 15 minutes max for streaming
+      Environment:
+        Variables:
+          AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
+          AWS_LWA_PORT: "8001"
+          PRISMA_BINARY_CACHE_DIR: /app/.prisma/cache
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: RESPONSE_STREAM
+        Cors:
+          AllowCredentials: false
+          AllowHeaders:
+            - "*"
+          AllowMethods:
+            - "*"
+          AllowOrigins:
+            - "*"
+      Policies:
+        - Statement:
+            - Sid: BedrockInvokePolicy
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+    Metadata:
+      Dockerfile: lambda.Dockerfile
+      DockerContext: .
+      DockerTag: fastapi-streaming-v1
+
+Outputs:
+  FastAPIFunctionUrl:
+    Description: "Function URL for FastAPI application"
+    Value: !GetAtt FastAPIFunctionUrl.FunctionUrl
+  FastAPIFunction:
+    Description: "FastAPI Lambda Function ARN"
+    Value: !GetAtt FastAPIFunction.Arn

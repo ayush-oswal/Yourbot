@@ -4,3 +4,5 @@ __pycache__
 *.ps1
 cmd.txt
 package
+.aws-sam
+*.toml

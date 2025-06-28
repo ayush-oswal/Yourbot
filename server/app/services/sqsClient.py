@@ -9,13 +9,13 @@ class SQSClient:
         # Initialize SQS client
         self.sqs = boto3.client(
             'sqs',
-            region_name=os.getenv('AWS_REGION', 'us-east-1'),
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+            region_name=os.getenv('MY_AWS_REGION', 'us-east-1'),
+            aws_access_key_id=os.getenv('MY_AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('MY_AWS_SECRET_ACCESS_KEY')
         )
         
         # Get queue URL from environment
-        self.queue_url = os.getenv('AWS_SQS_URL')
+        self.queue_url = os.getenv('MY_AWS_SQS_URL')
         if not self.queue_url:
             raise ValueError("AWS_SQS_URL environment variable is required")
         

@@ -6,20 +6,19 @@ load_dotenv()
 
 s3_client = boto3.client(
     "s3",
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    region_name=os.getenv("AWS_REGION"),
+    aws_access_key_id=os.getenv("MY_AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("MY_AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("MY_AWS_REGION"),
 )
 
-BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-
+BUCKET_NAME = os.getenv("MY_S3_BUCKET_NAME")
 
 def generate_presigned_upload_url(key: str, content_type: str, expiration: int = 3600):
     """Generate a presigned S3 URL for uploading a file."""
     try:
         url = s3_client.generate_presigned_url(
             "put_object",
-            Params={"Bucket": BUCKET_NAME, "Key": key, "ContentType": content_type},
+            Params={"Bucket": BUCKET_NAME, "Key": key, "ContentType": content_type, "ACL": "bucket-owner-full-control"},
             ExpiresIn=expiration,
         )
         return url
