@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Request
 from pydantic import BaseModel
 from app.utils.jwt import create_jwt
 from app.prisma.prisma_client import get_prisma
 from jose import jwt, JWTError
+from app.utils.rate_limiter import limiter
 import os
 
 router = APIRouter(
@@ -14,10 +15,10 @@ class LoginData(BaseModel):
     token: str
 
 @router.post("/login")
-async def login(data: LoginData, response: Response):
+@limiter.limit("40/minute")
+async def login(request: Request, data: LoginData, response: Response):
     """Login or register user and set JWT cookie."""
     try:
-
         nextauth_secret = os.getenv("NEXTAUTH_SECRET")
         if not nextauth_secret:
             raise HTTPException(status_code=500, detail="NextAuth secret not configured")

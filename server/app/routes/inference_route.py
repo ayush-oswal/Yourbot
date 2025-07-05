@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from app.middleware.get_user import get_current_user
 import google.generativeai as genai
@@ -7,6 +7,7 @@ import os
 import httpx
 from fastapi.responses import StreamingResponse
 from app.prisma.prisma_client import get_prisma
+from app.utils.rate_limiter import limiter
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -65,7 +66,8 @@ async def get_answer(chatbot_id: str, query: str, previous_messages: list[dict])
 
             
 @router.post("/")
-async def inference(data: InferenceData, user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def inference(request : Request, data: InferenceData, user_data: dict = Depends(get_current_user)):
     Prisma = await get_prisma()
     chatbot = await Prisma.chatbot.find_unique(where={"id": data.chatbot_id, "userId": user_data["user_id"]})
     if not chatbot:
@@ -76,7 +78,8 @@ async def inference(data: InferenceData, user_data: dict = Depends(get_current_u
     
     
 @router.post("/external")
-async def external_inference(data: ExternalInferenceData):
+@limiter.limit("40/minute")
+async def external_inference(request: Request, data: ExternalInferenceData):
     # Fetch user with api key and check if they have access to the chatbot
     Prisma = await get_prisma()
     user = await Prisma.user.find_unique(where={"apiKey": data.api_key}, include={"chatbots": True})

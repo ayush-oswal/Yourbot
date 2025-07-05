@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from app.middleware.get_user import get_current_user
 # from app.services.redisClient import lpush_to_queue
@@ -6,6 +6,7 @@ from app.services.sqsClient import send_to_queue
 
 from app.services.s3Client import generate_presigned_download_url
 from app.prisma.prisma_client import get_prisma
+from app.utils.rate_limiter import limiter
 
 router = APIRouter(
     prefix="/process",
@@ -17,7 +18,8 @@ class ProcessFileData(BaseModel):
     chatbot_id: str
 
 @router.post("/")
-async def process_file(data: ProcessFileData, user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def process_file(request: Request, data: ProcessFileData, user_data: dict = Depends(get_current_user)):
     """Process a file."""
     try:
         Prisma = await get_prisma()

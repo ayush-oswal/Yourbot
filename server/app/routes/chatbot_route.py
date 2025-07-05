@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from app.middleware.get_user import get_current_user
 from app.prisma.prisma_client import get_prisma
 from pydantic import BaseModel
+from app.utils.rate_limiter import limiter
 
 router = APIRouter(
     prefix="/chatbot",
@@ -19,7 +20,8 @@ class ChatbotEditData(BaseModel):
 
 
 @router.get("/{chatbot_id}")
-async def get_chatbots(chatbot_id: str, user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def get_chatbots(request: Request, chatbot_id: str, user_data: dict = Depends(get_current_user)):
     try:
         Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
@@ -32,7 +34,8 @@ async def get_chatbots(chatbot_id: str, user_data: dict = Depends(get_current_us
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/create")
-async def create_chatbot(data: ChatbotData, user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def create_chatbot(request: Request, data: ChatbotData, user_data: dict = Depends(get_current_user)):
     try:
         Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.create(
@@ -47,7 +50,8 @@ async def create_chatbot(data: ChatbotData, user_data: dict = Depends(get_curren
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/edit")
-async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def edit_chatbot(request: Request, data: ChatbotEditData, user_data: dict = Depends(get_current_user)):
     try:
         Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
@@ -64,7 +68,8 @@ async def edit_chatbot(data: ChatbotEditData, user_data: dict = Depends(get_curr
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{chatbot_id}/queries")
-async def get_chatbot_queries(chatbot_id: str, page_number: int = Query(default=1), user_data: dict = Depends(get_current_user)):
+@limiter.limit("40/minute")
+async def get_chatbot_queries(request: Request, chatbot_id: str, page_number: int = Query(default=1), user_data: dict = Depends(get_current_user)):
     try:
         Prisma = await get_prisma()
         chatbot = await Prisma.chatbot.find_first(
